@@ -4,8 +4,8 @@ and parsing the recycling number from the triangle"""
 # import needed libaries
 import imutils
 import cv2
+import pickle
 import numpy as np
-import pytesseract as tes_ocr
 from PIL import Image
 
 from helpers import find_similar_contours
@@ -13,6 +13,7 @@ from helpers import find_similar_contours
 # declare constants needed for project
 thumbnail_size = (400, 400)
 NUM_CNTS = 3 # number contours being detected
+SVM_IM_SIZE = (8, 8)
 
 # read the image using cv2
 filepath = "/Users/cameronwolfe/Desktop/3_ex.jpg"
@@ -91,14 +92,19 @@ thumb_im = image_og[min(centroid_ylocs): max(centroid_ylocs) + 1,
 cv2.imshow("Thumb", thumb_im)
 cv2.waitKey(0)
 
+# load in the svm from the txt file
+FILE_NAME = "svm.txt"
+SVM_FILE = open(FILE_NAME, "rb")
+svm = pickle.load(SVM_FILE)
 
-result = tes_ocr.image_to_string(Image.fromarray(thumb_im))
-print("Result: " + str(result))
-
-
-
-
-
+# resize the image to a size that can be classified by the SVM
+# convert image to grayscale
+gray_thumb = cv2.cvtColor(thumb_im, cv2.COLOR_BGR2GRAY)
+res_im = cv2.resize(gray_thumb, dsize=SVM_IM_SIZE).flatten()
+print(res_im.shape)
+# get the classification of the resized image from the SVM
+num = svm.predict(res_im.reshape(1, -1))
+print("Result: {0}".format(str(num)))
 	
 
 
