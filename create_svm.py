@@ -9,9 +9,9 @@ from sklearn.model_selection import train_test_split
 from mnist import MNIST
 
 # all constants
-NUM_EX = 5000
+NUM_EX = 30000
 SIDE_LEN = 28
-TEST_SIZE = 1000
+TEST_SIZE = 5000
 
 # connect mnist data reader to the file where mnist is located
 mndata = MNIST('/Users/cameronwolfe/Desktop/coding_files/mnist')
@@ -26,20 +26,24 @@ labels_t = np.array(labels_t)
 
 # cut the training data into a smaller subset 
 # reduces training time
-NUM_EX = 10000
 images = images[:NUM_EX].reshape((NUM_EX, -1))
 labels = labels[:NUM_EX]
 images_t = images_t[:TEST_SIZE].reshape((TEST_SIZE, -1))
 labels_t = labels_t[:TEST_SIZE]
 print("Data has been reduced")
 
+# invert the images
+images = (255 - images)/255.0
+images_t = (255 - images_t)/255.0
+
 # split into training and testing data - mnist already comes split so not needed
 #TEST_RATIO = .3
 #x_train, x_test, y_train, y_test = train_test_split(images, labels, test_size=TEST_RATIO)
 
 # instantiate the SVM
-GAMMA = .001
-classifier = svm.SVC(gamma=GAMMA)
+GAMMA = .05
+C_PARAM = 5
+classifier = svm.SVC(C=C_PARAM, gamma=GAMMA)
 
 # run the training and fit classifier to the digit labels
 classifier.fit(images, labels)
@@ -48,7 +52,7 @@ classifier.fit(images, labels)
 result = classifier.predict(images_t)
 print("Printing Confusion Matrix/Results on Test Data for SVM")
 print(metrics.confusion_matrix(labels_t, result))
-print(result)
+
 # serialize the resulting model with pickle to be used in the recycling project
 FILE_NAME = "svm.txt"
 SVM_FILE = open(FILE_NAME, "wb")

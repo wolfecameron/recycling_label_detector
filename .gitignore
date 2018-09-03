@@ -1,0 +1,4 @@
+# contains all files that should be ignored by git #
+
+*.txt
+*.pyc
