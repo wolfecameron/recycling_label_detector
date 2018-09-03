@@ -13,10 +13,10 @@ from helpers import find_similar_contours
 # declare constants needed for project
 thumbnail_size = (400, 400)
 NUM_CNTS = 3 # number contours being detected
-SVM_IM_SIZE = (8, 8)
+SVM_IM_SIZE = (28, 28)
 
 # read the image using cv2
-filepath = "/Users/cameronwolfe/Desktop/3_ex.jpg"
+filepath = "/Users/cameronwolfe/Desktop/5_ex.jpg"
 image = cv2.imread(filepath)
 image = cv2.resize(image, thumbnail_size)
 image_og = np.array(image, copy=True) # create copy of original pixels
@@ -100,8 +100,9 @@ svm = pickle.load(SVM_FILE)
 # resize the image to a size that can be classified by the SVM
 # convert image to grayscale
 gray_thumb = cv2.cvtColor(thumb_im, cv2.COLOR_BGR2GRAY)
-res_im = cv2.resize(gray_thumb, dsize=SVM_IM_SIZE).flatten()
+res_im = cv2.resize(gray_thumb, dsize=SVM_IM_SIZE).flatten()/255.0
 print(res_im.shape)
+
 # get the classification of the resized image from the SVM
 num = svm.predict(res_im.reshape(1, -1))
 print("Result: {0}".format(str(num)))
