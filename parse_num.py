@@ -16,10 +16,9 @@ NUM_CNTS = 3 # number contours being detected
 SVM_IM_SIZE = (28, 28)
 
 # read the image using cv2
-filepath = "/Users/cameronwolfe/Desktop/5_ex.jpg"
+filepath = "/Users/cameronwolfe/Desktop/1_ex.jpg"
 image = cv2.imread(filepath)
 image = cv2.resize(image, thumbnail_size)
-image_og = np.array(image, copy=True) # create copy of original pixels
 
 # show image before detecing the shape
 cv2.imshow("Image", image)
@@ -28,8 +27,11 @@ cv2.waitKey(0)
 # convert to greyscale and blur the photo
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
+thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_OTSU)[1]
+image_og = np.array(thresh, copy=True) # store original thresholded image to use later
 thresh = (255-thresh)
+cv2.imshow("Image", thresh)
+cv2.waitKey(0)
 
 # find the contours of the image
 cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -71,25 +73,38 @@ cv2.imshow("Image", image)
 cv2.waitKey(0)
 
 # convert inside of the contours to white
-cv2.drawContours(image_og, shape_cnts, -1, (255, 255, 255), thickness=cv2.FILLED, offset=(2,0))
-cv2.drawContours(image_og, shape_cnts, -1, (255, 255, 255), thickness=cv2.FILLED, offset=(-2,0))
-cv2.drawContours(image_og, shape_cnts, -1, (255, 255, 255), thickness=cv2.FILLED, offset=(0,2))
-cv2.drawContours(image_og, shape_cnts, -1, (255, 255, 255), thickness=cv2.FILLED, offset=(0,-2))
+cv2.drawContours(image_og, shape_cnts, -1, (255, 255, 255), thickness=cv2.FILLED, offset=(4,0))
+cv2.drawContours(image_og, shape_cnts, -1, (255, 255, 255), thickness=cv2.FILLED, offset=(-4,0))
+cv2.drawContours(image_og, shape_cnts, -1, (255, 255, 255), thickness=cv2.FILLED, offset=(0,4))
+cv2.drawContours(image_og, shape_cnts, -1, (255, 255, 255), thickness=cv2.FILLED, offset=(0,-4))
 
-
-
-# eliminate border of recycling shape contour from the image
-for rec_cnt in shape_cnts:
-	for px_loc in rec_cnt:
-		# change each pixel value within the contours to white
-		r_loc = px_loc[0][0]
-		c_loc = px_loc[0][1]
-		image_og[c_loc, r_loc] = (255, 255, 255)
 
 # create a thumbnail of the image of a bounding box around the centroids
 thumb_im = image_og[min(centroid_ylocs): max(centroid_ylocs) + 1,
 		min(centroid_xlocs): max(centroid_xlocs) + 1]
-cv2.imshow("Thumb", thumb_im)
+cv2.imshow("Image", thumb_im)
+cv2.waitKey(0)
+
+# center the number within the image
+thresh_cnt = thumb_im.copy()
+cnts = cv2.findContours(255-thresh_cnt.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
+
+# find the largest contour within the current image
+areas = [cv2.contourArea(c) for c in cnts]
+max_index = np.argmax(areas)
+cnt = cnts[max_index]
+thresh_cnt = cv2.cvtColor(thumb_im.copy(), cv2.COLOR_GRAY2RGB)
+cv2.drawContours(thresh_cnt, [cnt], -1, (0, 255, 0), -1)
+cv2.imshow("Image", thresh_cnt)
+cv2.waitKey(0)
+
+# find hull around the object then get all associated bounding box values
+hull = cv2.convexHull(cnt)
+max_locs = np.amax(hull, axis=0)
+min_locs = np.amin(hull, axis=0)
+centered_thumb = thumb_im[min_locs[0][1]: max_locs[0][1],
+			min_locs[0][0]: max_locs[0][0]]
+cv2.imshow("Image", centered_thumb)
 cv2.waitKey(0)
 
 # load in the svm from the txt file
@@ -98,10 +113,8 @@ SVM_FILE = open(FILE_NAME, "rb")
 svm = pickle.load(SVM_FILE)
 
 # resize the image to a size that can be classified by the SVM
-# convert image to grayscale
-gray_thumb = cv2.cvtColor(thumb_im, cv2.COLOR_BGR2GRAY)
-res_im = cv2.resize(gray_thumb, dsize=SVM_IM_SIZE).flatten()/255.0
-print(res_im.shape)
+# image has already been converted to grayscale
+res_im = cv2.resize(thumb_im, dsize=SVM_IM_SIZE).flatten()/255.0
 
 # get the classification of the resized image from the SVM
 num = svm.predict(res_im.reshape(1, -1))
