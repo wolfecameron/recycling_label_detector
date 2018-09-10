@@ -14,9 +14,10 @@ from helpers import find_similar_contours
 thumbnail_size = (400, 400)
 NUM_CNTS = 3 # number contours being detected
 SVM_IM_SIZE = (28, 28)
+THUMB_BORDER = .25
 
 # read the image using cv2
-filepath = "/Users/cameronwolfe/Desktop/1_ex.jpg"
+filepath = "/Users/cameronwolfe/Desktop/5_ex.png"
 image = cv2.imread(filepath)
 image = cv2.resize(image, thumbnail_size)
 
@@ -104,6 +105,10 @@ max_locs = np.amax(hull, axis=0)
 min_locs = np.amin(hull, axis=0)
 centered_thumb = thumb_im[min_locs[0][1]: max_locs[0][1],
 			min_locs[0][0]: max_locs[0][0]]
+border_px_top = int(THUMB_BORDER*centered_thumb.shape[0])
+border_px_sides = int(THUMB_BORDER*centered_thumb.shape[1])
+centered_thumb = cv2.copyMakeBorder(centered_thumb, border_px_top, border_px_top, border_px_sides,
+		 border_px_sides, cv2.BORDER_CONSTANT, value=255)
 cv2.imshow("Image", centered_thumb)
 cv2.waitKey(0)
 

@@ -9,9 +9,9 @@ from sklearn.model_selection import train_test_split
 from mnist import MNIST
 
 # all constants
-NUM_EX = 50000
+NUM_EX = 15000
 SIDE_LEN = 28
-TEST_SIZE = 5000
+TEST_SIZE = 1500
 
 # connect mnist data reader to the file where mnist is located
 mndata = MNIST('/Users/cameronwolfe/Desktop/coding_files/mnist')
@@ -24,23 +24,39 @@ labels = np.array(labels)
 images_t = np.array([np.array(im) for im in images_t])
 labels_t = np.array(labels_t)
 
+# define a list of numbers that will be classified
+good_labels = [1, 2, 3]
+
 # eliminate all 0s from the dataset, not needed for this
-bad_indices = np.where(labels == 0)
-bad_indices_t = np.where(labels_t == 0)
+# numbers above 6 also do not exist for recycling
+bad_indices = np.where((labels == 0) | (labels == 4))
+bad_indices_t = np.where((labels_t == 0) | (labels_t == 4))
+images = np.delete(images, bad_indices, axis=0)
+labels = np.delete(labels, bad_indices)
+images_t = np.delete(images_t, bad_indices_t, axis=0)
+labels_t = np.delete(labels_t, bad_indices_t)
+bad_indices = np.where(labels > 5)
+bad_indices_t = np.where(labels_t > 5)
 images = np.delete(images, bad_indices, axis=0)
 labels = np.delete(labels, bad_indices)
 images_t = np.delete(images_t, bad_indices_t, axis=0)
 labels_t = np.delete(labels_t, bad_indices_t)
 
+# anything 3 or greater can be labeled as the same category
+labels[labels > 3] = 3
+labels_t[labels_t > 3] = 3
+
 # cut the training data into a smaller subset 
 # reduces training time
-images = images[:NUM_EX].reshape((NUM_EX, -1))
-labels = labels[:NUM_EX]
-labels[labels >= 3] = 3 # anything >= 3 is put in same bin for recycling
-images_t = images_t[:TEST_SIZE].reshape((TEST_SIZE, -1))
-labels_t = labels_t[:TEST_SIZE]
-labels_t[labels_t >= 3] = 3
-print("Data has been reduced")
+# balance all the classes
+for l in good_labels:
+	bad_indices = np.where(labels == l)[0][int(NUM_EX/len(good_labels)): ]
+	images = np.delete(images, bad_indices, axis=0)
+	labels = np.delete(labels, bad_indices)
+
+# limit the size of the test set
+images_t = images_t[: TEST_SIZE]
+labels_t = labels_t[: TEST_SIZE]
 
 # invert the images
 images = (255 - images)/255.0
